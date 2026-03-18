@@ -86,18 +86,8 @@ AREA_TYPES = {
     },
     "state": {
         "api": "StateStatistics", "huc": None,
-        "jobs": STATE_FIPS,   # {abbr: fips} — we use fips as aoi, abbr as label
+        "jobs": STATE_FIPS,
         "multi": False,
-    },
-    "county": {
-        "api": "CountyStatistics", "huc": None,
-        "jobs": {abbr: abbr for abbr in STATE_FIPS},  # aoi = state abbrev, returns all counties
-        "multi": True,   # response has multiple rows per date (one per county)
-    },
-    "climate_div": {
-        "api": "ClimateDivisionStatistics", "huc": None,
-        "jobs": {"us": "All Climate Divisions"},
-        "multi": True,
     },
     "fema": {
         "api": "FEMARegionStatistics", "huc": None,
@@ -134,25 +124,10 @@ AREA_TYPES = {
         "jobs": CLIMATE_HUBS,
         "multi": False,
     },
-    "rdews": {
-        "api": "RegionalDroughtEarlyWarningSystemStatistics", "huc": None,
-        "jobs": RDEWS,
-        "multi": False,
-    },
     "rcc": {
         "api": "RegionalClimateCenterStatistics", "huc": None,
         "jobs": RCC_IDS,
         "multi": False,
-    },
-    "tribal": {
-        "api": "TribalStatistics", "huc": None,
-        "jobs": {"us": "All Tribal Areas"},
-        "multi": True,
-    },
-    "urban": {
-        "api": "UrbanAreaStatistics", "huc": None,
-        "jobs": {"us": "All Urban Areas"},
-        "multi": True,
     },
 }
 
