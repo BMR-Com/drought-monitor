@@ -1,0 +1,36 @@
+name: Update Drought Data
+
+on:
+  schedule:
+    # Every Thursday at 8 PM UTC (USDM releases data Thursday ~2 PM ET)
+    - cron: "0 20 * * 4"
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests pandas openpyxl
+
+      - name: Run scraper
+        run: python scraper.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "data: weekly update $(date -u '+%Y-%m-%d')"
+          git push
