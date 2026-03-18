@@ -310,7 +310,6 @@ tr.sec-break td{border-top:2px solid var(--border);padding-top:9px;}
   <select class="cinput" id="areaTypeSelect" onchange="onAreaTypeChange()" style="min-width:190px">
     <option value="national">National</option>
     <option value="state">State</option>
-    <option value="county">County</option>
     <option value="fema">FEMA Region</option>
     <option value="nws_region">NWS Region</option>
     <option value="rfc">River Forecast Center</option>
@@ -318,7 +317,6 @@ tr.sec-break td{border-top:2px solid var(--border);padding-top:9px;}
     <option value="usace_district">USACE District</option>
     <option value="usace_division">USACE Division</option>
     <option value="climate_hub">USDA Climate Hub</option>
-    <option value="rdews">Drought Early Warning System</option>
     <option value="rcc">Regional Climate Center</option>
   </select>
 
@@ -346,7 +344,6 @@ const REPO = 'https://raw.githubusercontent.com/malli27at1-svg/drought-monitor/m
 const AREA_DEFS = {
   national:       { multi:false, items:{ us:'United States', conus:'CONUS' } },
   state:          { multi:false, items:{ AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming' } },
-  county:         { multi:true,  items:{ AL:'Alabama Counties',AK:'Alaska Counties',AZ:'Arizona Counties',AR:'Arkansas Counties',CA:'California Counties',CO:'Colorado Counties',CT:'Connecticut Counties',DE:'Delaware Counties',FL:'Florida Counties',GA:'Georgia Counties',HI:'Hawaii Counties',ID:'Idaho Counties',IL:'Illinois Counties',IN:'Indiana Counties',IA:'Iowa Counties',KS:'Kansas Counties',KY:'Kentucky Counties',LA:'Louisiana Counties',ME:'Maine Counties',MD:'Maryland Counties',MA:'Massachusetts Counties',MI:'Michigan Counties',MN:'Minnesota Counties',MS:'Mississippi Counties',MO:'Missouri Counties',MT:'Montana Counties',NE:'Nebraska Counties',NV:'Nevada Counties',NH:'New Hampshire Counties',NJ:'New Jersey Counties',NM:'New Mexico Counties',NY:'New York Counties',NC:'North Carolina Counties',ND:'North Dakota Counties',OH:'Ohio Counties',OK:'Oklahoma Counties',OR:'Oregon Counties',PA:'Pennsylvania Counties',RI:'Rhode Island Counties',SC:'South Carolina Counties',SD:'South Dakota Counties',TN:'Tennessee Counties',TX:'Texas Counties',UT:'Utah Counties',VT:'Vermont Counties',VA:'Virginia Counties',WA:'Washington Counties',WV:'West Virginia Counties',WI:'Wisconsin Counties',WY:'Wyoming Counties' } },
   fema:           { multi:false, items:{ '1':'Region 1 — New England','2':'Region 2 — NY/NJ/PR','3':'Region 3 — Mid-Atlantic','4':'Region 4 — Southeast','5':'Region 5 — Midwest','6':'Region 6 — South Central','7':'Region 7 — Plains','8':'Region 8 — Mountain','9':'Region 9 — Pacific','10':'Region 10 — Northwest' } },
   nws_region:     { multi:false, items:{ CR:'Central',ER:'Eastern',PR:'Pacific',SR:'Southern',WR:'Western',AR:'Alaska',BR:'Boulder' } },
   rfc:            { multi:false, items:{ ABRFC:'Arkansas-Red Basin',CBRFC:'Colorado Basin',CNRFC:'California-Nevada',LMRFC:'Lower Mississippi',MBRFC:'Missouri Basin',MARFC:'Middle Atlantic',NCRFC:'North Central',NERFC:'Northeast',NWRFC:'Northwest',OHRFC:'Ohio',SERFC:'Southeast',WGRFC:'West Gulf' } },
@@ -354,7 +351,6 @@ const AREA_DEFS = {
   usace_district: { multi:false, items:{ SWF:'Fort Worth',SWT:'Tulsa',SPK:'Sacramento',SPA:'Albuquerque',SPL:'Los Angeles',SPN:'San Francisco',NAB:'Baltimore',NAN:'New York',NAO:'Norfolk',NAP:'Philadelphia',LRB:'Buffalo',LRC:'Chicago',LRH:'Huntington',LRL:'Louisville',LRN:'Nashville',LRP:'Pittsburgh',MVK:'Vicksburg',MVM:'Memphis',MVN:'New Orleans',MVR:'Rock Island',MVS:'St. Louis',NWK:'Kansas City',NWO:'Omaha',NWP:'Portland OR',NWS:'Seattle',NWW:'Walla Walla',POA:'Alaska',SAD:'Savannah',SAJ:'Jacksonville',SAM:'Mobile',SAW:'Wilmington',SWG:'Galveston',SWL:'Little Rock' } },
   usace_division: { multi:false, items:{ LRD:'Great Lakes & Ohio',MVD:'Mississippi Valley',NAD:'North Atlantic',NWD:'Northwestern',POD:'Pacific Ocean',SAD:'South Atlantic',SWD:'Southwestern' } },
   climate_hub:    { multi:false, items:{ '1':'Northeast','2':'Southeast','3':'Midwest','4':'Southern Plains & Gulf Coast','5':'Northern Plains','6':'Southwest','7':'Northwest' } },
-  rdews:          { multi:false, items:{ '1':'Missouri Basin','2':'Upper Colorado RB','3':'California-Nevada','4':'North Central','5':'Southern Plains','6':'Southeast','7':'Intermountain West','8':'Peninsula Florida','9':'Northeast','10':'Pacific Islands' } },
   rcc:            { multi:false, items:{ '1':'High Plains','2':'Midwest','3':'Northeast','4':'Southern','5':'Southeast','6':'Western' } },
 };
 
