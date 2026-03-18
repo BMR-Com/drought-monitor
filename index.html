@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drought Analytics — Geographic Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0f;--surface:#111318;--surface2:#181c23;--border:#1e2330;
+  --amber:#e8a020;--amber-dim:#7a5210;
+  --text:#c8cdd8;--text-dim:#555e72;--text-bright:#e8ecf4;
+  --d0:#FFE600;--d1:#FF8000;--d2:#FF2D00;--d3:#AA0000;--d4:#3B0010;--none-c:#3a7d44;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:3px;color:var(--amber);}
+.htag{font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;border-left:1px solid var(--border);padding-left:16px;margin-left:16px;}
+.hright{display:flex;align-items:center;gap:12px;}
+.btn-print{background:var(--amber);color:#0a0c0f;border:none;padding:7px 18px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;font-weight:700;display:flex;align-items:center;gap:6px;transition:opacity .2s;}
+.btn-print:hover{opacity:.85;}
+.liveb{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:2px;color:var(--none-c);text-transform:uppercase;}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--none-c);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* UPLOAD */
+.ubar{padding:12px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface);}
+.udrop{border:1px dashed var(--amber-dim);border-radius:2px;padding:8px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;background:rgba(232,160,32,.04);transition:all .2s;}
+.udrop:hover{border-color:var(--amber);background:rgba(232,160,32,.08);}
+.udrop input{display:none;}
+.utxt{color:var(--text-bright);font-size:11px;}
+.fok{font-size:11px;color:var(--amber);display:flex;align-items:center;gap:5px;}
+.lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+.cinput{background:var(--surface2);border:1px solid var(--border);color:var(--text-bright);padding:6px 11px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:11px;outline:none;min-width:130px;transition:border-color .2s;}
+.cinput:focus{border-color:var(--amber);}
+
+/* LAYOUT */
+.main{padding:14px 24px;max-width:1800px;margin:0 auto;}
+.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:9px;margin-top:20px;}
+.st{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;color:var(--text-bright);}
+.ss{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+
+/* STAT CARDS */
+.srow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:4px;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:12px 13px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.sc.d0::before{background:var(--d0);}.sc.d1::before{background:var(--d1);}.sc.d2::before{background:var(--d2);}.sc.d3::before{background:var(--d3);}.sc.d4::before{background:var(--d4);}
+.slbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+.sval{font-size:26px;color:var(--text-bright);font-weight:600;margin:3px 0 4px;}
+.schg-row{display:flex;flex-direction:column;gap:3px;}
+.schg{font-size:10px;}
+.schg.yoy{font-size:9px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:3px;margin-top:1px;}
+.up{color:#e74c3c;}.down{color:var(--none-c);}.flat{color:var(--text-dim);}
+
+/* CHART BOXES */
+.cbox{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:13px;margin-bottom:12px;}
+.ctitle{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:9px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:5px;}
+.cname{color:var(--text-bright);font-size:10px;letter-spacing:1px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+/* analog vertical stack — screen */
+.ana-stack{display:flex;flex-direction:column;gap:14px;}
+
+/* LEGEND */
+.leg{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.li{display:flex;align-items:center;gap:4px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);}
+.ld{width:8px;height:8px;border-radius:1px;}
+.ldr{width:14px;height:2px;border-radius:1px;}
+
+/* INLINE YEAR LEGEND for analog charts */
+.yr-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.yl-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text-dim);padding:2px 6px;border-radius:2px;border:1px solid var(--border);transition:opacity .15s;}
+.yl-item.cur{border-color:var(--d0);color:var(--d0);}
+.yl-item.on{color:var(--text-bright);}
+.yl-item.off{opacity:.35;}
+.yl-dot{width:8px;height:3px;border-radius:1px;flex-shrink:0;}
+.yl-item button{background:none;border:none;cursor:pointer;padding:0;line-height:1;font-size:10px;color:inherit;margin-left:2px;opacity:.6;}
+.yl-item button:hover{opacity:1;}
+
+/* ANALOG SECTION */
+.analog-wrap{border:1px solid rgba(34,211,238,.2);border-radius:4px;padding:14px;background:rgba(34,211,238,.025);}
+.analog-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:2px;padding:2px 9px;font-size:8px;letter-spacing:2px;color:#22d3ee;text-transform:uppercase;}
+
+/* TABLE */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:12px;}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--surface2);}
+th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);padding:9px 12px;text-align:right;font-weight:400;border-bottom:1px solid var(--border);}
+th:first-child{text-align:left;}
+td{padding:7px 12px;border-bottom:1px solid rgba(30,35,48,.5);text-align:right;font-size:10px;color:var(--text);}
+td:first-child{text-align:left;font-size:9px;color:var(--text-dim);}
+tr:last-child td{border-bottom:none;}
+tr.cur td{background:rgba(232,160,32,.07);color:var(--text-bright);}
+tr.cur td:first-child{color:var(--amber);}
+tr.mx td{background:rgba(192,57,43,.06);}
+tr.mn td{background:rgba(58,125,68,.06);}
+tr.ana td{background:rgba(34,211,238,.04);}
+tr.ana td:first-child{color:#22d3ee;}
+tr.sec-break td{border-top:2px solid var(--border);padding-top:9px;}
+.hc{font-weight:700;}
+.tbl-section-lbl{font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;background:var(--surface2);color:var(--text-dim);border-bottom:1px solid var(--border);}
+
+/* COMMENTARY */
+.cmbox{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:3px;padding:16px;margin-bottom:12px;}
+.cmtitle{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--amber);margin-bottom:10px;}
+.cmbody{font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.8;color:var(--text);}
+.cmbody p{margin-bottom:8px;}
+.hl{color:var(--amber);font-weight:500;}.al{color:#e74c3c;font-weight:500;}.pos{color:var(--none-c);font-weight:500;}
+
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px;color:var(--text-dim);text-align:center;gap:12px;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ═══════ PRINT STYLES ═══════ */
+@media print{
+  @page{size:A4 landscape;margin:7mm 8mm;}
+
+  /* ── BASE ── */
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{background:#fff!important;color:#111!important;font-size:8px!important;}
+  .hdr,.ubar,.yl-item button{display:none!important;}
+
+  .cbox,.sc,.tbl-wrap,.cmbox,.analog-wrap{background:#fff!important;border:1px solid #bbb!important;}
+  .sc::before{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  /* ── ALL TEXT DARK ── */
+  .main{padding:0!important;max-width:100%!important;}
+  .st{color:#111!important;font-size:12px!important;}
+  .ss{color:#444!important;}
+  .slbl{color:#444!important;}
+  .sval{color:#111!important;}
+  .schg{color:#333!important;}
+  .schg.up{color:#b91c1c!important;}
+  .schg.down{color:#166534!important;}
+  .schg.yoy{color:#555!important;border-top-color:#ccc!important;}
+  .schg.yoy.up{color:#b91c1c!important;}
+  .schg.yoy.down{color:#166534!important;}
+  .cname{color:#111!important;}
+  .ctitle{color:#444!important;}
+  .lbl,.tbl-section-lbl{color:#444!important;}
+  .li{color:#333!important;}
+  .leg{color:#333!important;}
+  .analog-badge{background:#e8f4ff!important;border:1px solid #888!important;color:#1a3a5c!important;}
+  /* year legend items */
+  .yl-item{color:#222!important;border-color:#aaa!important;padding:1px 4px!important;font-size:7px!important;}
+  .yl-item.cur{color:#7a5800!important;border-color:#7a5800!important;}
+  /* table */
+  th{color:#333!important;padding:5px 8px!important;background:#f5f5f5!important;}
+  td{color:#222!important;padding:4px 8px!important;}
+  td:first-child{color:#444!important;}
+  tr.cur td:first-child{color:#7a5800!important;}
+  tr.ana td:first-child{color:#0c4a6e!important;}
+  thead{background:#f0f0f0!important;}
+  .hc{font-weight:700!important;}
+  /* commentary */
+  .cmtitle{color:#7a4800!important;font-size:12px!important;}
+  .cmbody{font-size:10px!important;line-height:1.5!important;color:#111!important;}
+  .hl{color:#7a4800!important;}
+  .al{color:#991b1b!important;}
+  .pos{color:#14532d!important;}
+
+  /* ── PAGE BREAKS ── */
+  .page1{page-break-after:always;}
+  .ana-page{page-break-after:always;}
+  .final-page{page-break-after:avoid;}
+
+  /* ════════════════════════════════════════════════
+     PAGE 1 — fill full A4 landscape height
+     A4 landscape usable ≈ 297mm × 210mm, margins 7mm → 196mm usable height
+  ════════════════════════════════════════════════ */
+  .page1{
+    width:100%!important;
+    height:196mm!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    gap:0!important;
+  }
+  /* stat section: fixed compact height */
+  .page1 .srow-wrap{
+    flex:0 0 auto!important;
+  }
+  .page1 .sh{
+    flex:0 0 auto!important;
+    margin-top:2px!important;
+    margin-bottom:3px!important;
+  }
+  .srow{gap:5px!important;margin-bottom:3px!important;}
+  .sval{font-size:14px!important;}
+  .sc{padding:8px 10px!important;}
+  .schg-row{gap:2px!important;}
+  /* history and seasonality sections each grow equally */
+  .page1 .hist-section{
+    flex:1 1 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:0!important;
+    margin-bottom:0!important;
+  }
+  .page1 .seas-section{
+    flex:1 1 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:0!important;
+    margin-bottom:0!important;
+  }
+  .page1 .hist-section .sh,
+  .page1 .seas-section .sh{
+    flex:0 0 auto!important;
+    margin-top:4px!important;
+    margin-bottom:3px!important;
+  }
+  .page1 .hist-section .cbox,
+  .page1 .seas-section .cbox{
+    flex:1 1 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    padding:7px!important;
+    margin-bottom:0!important;
+    min-height:0!important;
+  }
+  .page1 .ctitle{
+    flex:0 0 auto!important;
+    margin-bottom:5px!important;
+  }
+  /* canvases on page1 stretch to fill */
+  .page1 canvas{
+    flex:1 1 0!important;
+    width:100%!important;
+    height:0!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+  /* ════════════════════════════════════════════════
+     ANALOG PAGES — 2 charts per page, fill full height
+  ════════════════════════════════════════════════ */
+  .ana-page{
+    width:100%!important;
+    height:196mm!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+  .ana-page .sh{flex:0 0 auto!important;margin:0 0 3px 0!important;}
+  .ana-page .analog-wrap{
+    flex:1 1 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    border:1px solid #aaa!important;
+    padding:5px!important;
+    overflow:hidden!important;
+    height:0!important;
+  }
+  /* vertical stack fills its container */
+  .ana-page .ana-stack{
+    flex:1 1 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:6px!important;
+    height:100%!important;
+    overflow:hidden!important;
+  }
+  /* each chart box gets equal share of height */
+  .ana-page .cbox{
+    flex:1 1 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    padding:7px!important;
+    margin-bottom:0!important;
+    overflow:hidden!important;
+    min-height:0!important;
+  }
+  .ana-page .ctitle{flex:0 0 auto!important;margin-bottom:3px!important;}
+  .ana-page .yr-legend{
+    flex:0 0 auto!important;
+    gap:3px!important;
+    margin-bottom:4px!important;
+    max-height:26px!important;
+    overflow:hidden!important;
+  }
+  .ana-page canvas{
+    flex:1 1 auto!important;
+    width:100%!important;
+    height:0!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div style="display:flex;align-items:center">
+    <div class="logo">DROUGHT INTEL</div>
+    <div class="htag">GEOGRAPHIC DROUGHT MONITOR · USDM LIVE DATA</div>
+  </div>
+  <div class="hright">
+    <div class="liveb"><div class="ldot"></div>LIVE</div>
+    <button class="btn-print" onclick="window.print()">⎙&nbsp;&nbsp;PRINT / PDF</button>
+  </div>
+</div>
+
+<!-- SELECTOR BAR -->
+<div class="ubar" id="selectorBar">
+  <span class="lbl">Area Type</span>
+  <select class="cinput" id="areaTypeSelect" onchange="onAreaTypeChange()" style="min-width:190px">
+    <option value="national">National</option>
+    <option value="state">State</option>
+    <option value="county">County</option>
+    <option value="climate_div">Climate Division</option>
+    <option value="fema">FEMA Region</option>
+    <option value="nws_region">NWS Region</option>
+    <option value="rfc">River Forecast Center</option>
+    <option value="huc2">HUC (2-digit)</option>
+    <option value="usace_district">USACE District</option>
+    <option value="usace_division">USACE Division</option>
+    <option value="climate_hub">USDA Climate Hub</option>
+    <option value="rdews">Drought Early Warning System</option>
+    <option value="rcc">Regional Climate Center</option>
+    <option value="tribal">Tribal Areas</option>
+    <option value="urban">Urban Areas</option>
+  </select>
+
+  <span class="lbl">Area</span>
+  <select class="cinput" id="areaSelect" onchange="onAreaChange()" style="min-width:230px">
+    <option value="">Loading...</option>
+  </select>
+
+  <!-- county sub-picker (shown only for county data) -->
+  <span class="lbl" id="countyLbl" style="display:none">County</span>
+  <select class="cinput" id="countySelect" onchange="onCountyChange()"
+          style="display:none;min-width:200px">
+    <option value="">— All counties —</option>
+  </select>
+
+  <div id="loadStatus" style="font-size:11px;color:var(--amber);display:none">
+    <span id="loadStatusText">Loading…</span>
+  </div>
+
+  <!-- data source toggle -->
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span class="lbl">Data source</span>
+    <select class="cinput" id="dataSourceSelect" onchange="onSourceChange()" style="min-width:170px">
+      <option value="api">Live API (real-time)</option>
+      <option value="repo">GitHub repo CSV</option>
+    </select>
+    <input class="cinput" id="repoBase" type="text" placeholder="https://raw.githubusercontent.com/YOU/REPO/main/data"
+           style="display:none;min-width:380px" onchange="onAreaChange()">
+  </div>
+</div>
+
+<div class="main" id="mainArea">
+  <div class="empty" id="emptyState">
+    <div style="font-size:40px;opacity:.3">🌵</div>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber)">Initialising…</div>
+    <div style="font-size:10px;color:var(--text-dim)">Loading area list from USDM</div>
+  </div>
+  <div id="dash" style="display:none"></div>
+</div>
+
+
+<script>
+/* ══════════════════════════════════════════════════════
+   AREA DEFINITIONS
+══════════════════════════════════════════════════════ */
+const STATE_FIPS = {
+  AL:'01',AK:'02',AZ:'04',AR:'05',CA:'06',CO:'08',CT:'09',DE:'10',FL:'12',GA:'13',
+  HI:'15',ID:'16',IL:'17',IN:'18',IA:'19',KS:'20',KY:'21',LA:'22',ME:'23',MD:'24',
+  MA:'25',MI:'26',MN:'27',MS:'28',MO:'29',MT:'30',NE:'31',NV:'32',NH:'33',NJ:'34',
+  NM:'35',NY:'36',NC:'37',ND:'38',OH:'39',OK:'40',OR:'41',PA:'42',RI:'44',SC:'45',
+  SD:'46',TN:'47',TX:'48',UT:'49',VT:'50',VA:'51',WA:'53',WV:'54',WI:'55',WY:'56',
+};
+const FIPS_ABBR = Object.fromEntries(Object.entries(STATE_FIPS).map(([a,f])=>[f,a]));
+
+const AREA_DEFS = {
+  national:       { label:'National', items:{ us:'United States', conus:'CONUS' }, multi:false },
+  state:          { label:'State',    items:Object.fromEntries(Object.entries(STATE_FIPS).map(([a,f])=>[f,a])), multi:false },
+  county:         { label:'County',   items:Object.fromEntries(Object.entries(STATE_FIPS).map(([a])=>[a,a+' Counties'])), multi:true },
+  climate_div:    { label:'Climate Division', items:{ us:'All Climate Divisions' }, multi:true },
+  fema:           { label:'FEMA Region', items:{1:'Region 1 (NE)',2:'Region 2 (NY/NJ)',3:'Region 3 (Mid-Atl)',4:'Region 4 (SE)',5:'Region 5 (Midwest)',6:'Region 6 (S.Plains)',7:'Region 7 (IA/KS/MO/NE)',8:'Region 8 (Rockies)',9:'Region 9 (Pacific)',10:'Region 10 (NW)'}, multi:false },
+  nws_region:     { label:'NWS Region', items:{ CR:'Central',ER:'Eastern',PR:'Pacific',SR:'Southern',WR:'Western',AR:'Alaska',BR:'Boulder' }, multi:false },
+  rfc:            { label:'River Forecast Center', items:{ ABRFC:'Arkansas-Red Basin',CBRFC:'Colorado Basin',CNRFC:'California-Nevada',LMRFC:'Lower Mississippi',MBRFC:'Missouri Basin',MARFC:'Middle Atlantic',NCRFC:'North Central',NERFC:'Northeast',NWRFC:'Northwest',OHRFC:'Ohio',SERFC:'Southeast',WGRFC:'West Gulf' }, multi:false },
+  huc2:           { label:'HUC 2-digit', items:{ '01':'New England','02':'Mid Atlantic','03':'S. Atlantic-Gulf','04':'Great Lakes','05':'Ohio','06':'Tennessee','07':'Upper Mississippi','08':'Lower Mississippi','09':'Souris-Red-Rainy','10':'Missouri','11':'AR-White-Red','12':'Texas-Gulf','13':'Rio Grande','14':'Upper Colorado','15':'Lower Colorado','16':'Great Basin','17':'Pacific NW','18':'California' }, multi:false },
+  usace_district: { label:'USACE District', items:{ SWF:'Fort Worth',SWT:'Tulsa',SPK:'Sacramento',SPA:'Albuquerque',SPL:'Los Angeles',SPN:'San Francisco',NAB:'Baltimore',NAN:'New York',NAO:'Norfolk',NAP:'Philadelphia',LRB:'Buffalo',LRC:'Chicago',LRH:'Huntington',LRL:'Louisville',LRN:'Nashville',LRP:'Pittsburgh',MVK:'Vicksburg',MVM:'Memphis',MVN:'New Orleans',MVR:'Rock Island',MVS:'St. Louis',NWK:'Kansas City',NWO:'Omaha',NWP:'Portland OR',NWS:'Seattle',NWW:'Walla Walla',POA:'Alaska',SAD:'Savannah',SAJ:'Jacksonville',SAM:'Mobile',SAW:'Wilmington',SWG:'Galveston',SWL:'Little Rock' }, multi:false },
+  usace_division: { label:'USACE Division', items:{ LRD:'Great Lakes & Ohio',MVD:'Mississippi Valley',NAD:'North Atlantic',NWD:'Northwestern',POD:'Pacific Ocean',SAD:'South Atlantic',SWD:'Southwestern' }, multi:false },
+  climate_hub:    { label:'USDA Climate Hub', items:{ 1:'Northeast',2:'Southeast',3:'Midwest',4:'Southern Plains & Gulf',5:'Northern Plains',6:'Southwest',7:'Northwest' }, multi:false },
+  rdews:          { label:'Drought Early Warning System', items:{ 1:'Missouri Basin',2:'Upper Colorado RB',3:'California-Nevada',4:'North Central',5:'Southern Plains',6:'Southeast',7:'Intermountain West',8:'Peninsula Florida',9:'Northeast',10:'Pacific Islands' }, multi:false },
+  rcc:            { label:'Regional Climate Center', items:{ 1:'High Plains',2:'Midwest',3:'Northeast',4:'Southern',5:'Southeast',6:'Western' }, multi:false },
+  tribal:         { label:'Tribal Areas', items:{ us:'All Tribal Areas' }, multi:true },
+  urban:          { label:'Urban Areas', items:{ us:'All Urban Areas' }, multi:true },
+};
+
+const API_MAP = {
+  national:'USStatistics', state:'StateStatistics', county:'CountyStatistics',
+  climate_div:'ClimateDivisionStatistics', fema:'FEMARegionStatistics',
+  nws_region:'NWSRegionStatistics', rfc:'RiverForecastCenterStatistics',
+  huc2:'HUCStatistics', usace_district:'USACEDistrictStatistics',
+  usace_division:'USACEDivisionStatistics', climate_hub:'ClimateHubStatistics',
+  rdews:'RegionalDroughtEarlyWarningSystemStatistics',
+  rcc:'RegionalClimateCenterStatistics', tribal:'TribalStatistics', urban:'UrbanAreaStatistics',
+};
+
+const BASE_API = 'https://usdmdataservices.unl.edu/api';
+const START    = '1/1/2000';
+
+let CURRENT_AREA_TYPE = 'national';
+let CURRENT_AOI       = 'us';
+let CURRENT_COUNTY    = '';
+
+/* ══════════════════════════════════════════════════════
+   SELECTOR LOGIC
+══════════════════════════════════════════════════════ */
+function onSourceChange(){
+  const src = document.getElementById('dataSourceSelect').value;
+  document.getElementById('repoBase').style.display = src === 'repo' ? '' : 'none';
+}
+
+function onAreaTypeChange(){
+  CURRENT_AREA_TYPE = document.getElementById('areaTypeSelect').value;
+  const def   = AREA_DEFS[CURRENT_AREA_TYPE];
+  const sel   = document.getElementById('areaSelect');
+  sel.innerHTML = Object.entries(def.items)
+    .map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  CURRENT_AOI    = sel.value;
+  CURRENT_COUNTY = '';
+  document.getElementById('countyLbl').style.display    = 'none';
+  document.getElementById('countySelect').style.display = 'none';
+  loadData();
+}
+
+function onAreaChange(){
+  CURRENT_AOI    = document.getElementById('areaSelect').value;
+  CURRENT_COUNTY = '';
+  document.getElementById('countyLbl').style.display    = 'none';
+  document.getElementById('countySelect').style.display = 'none';
+  loadData();
+}
+
+function onCountyChange(){
+  CURRENT_COUNTY = document.getElementById('countySelect').value;
+  if(window._rawMultiData) filterAndRender(window._rawMultiData);
+}
+
+function setStatus(msg, ok=true){
+  const el = document.getElementById('loadStatus');
+  el.style.display = 'block';
+  el.style.color   = ok ? 'var(--amber)' : '#e74c3c';
+  document.getElementById('loadStatusText').textContent = msg;
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════════════════════ */
+async function loadData(){
+  const def    = AREA_DEFS[CURRENT_AREA_TYPE];
+  const label  = def.items[CURRENT_AOI] || CURRENT_AOI;
+  const source = document.getElementById('dataSourceSelect').value;
+
+  document.getElementById('dash').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('emptyState').innerHTML = `
+    <div style="font-size:28px;opacity:.5">⧗</div>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber)">Loading ${label}…</div>
+    <div style="font-size:10px;color:var(--text-dim)">Fetching from ${source === 'api' ? 'USDM API' : 'GitHub repo'}…</div>`;
+  setStatus(`Loading ${label}…`);
+
+  try {
+    let rows;
+    if(source === 'api'){
+      rows = await fetchFromAPI();
+    } else {
+      rows = await fetchFromRepo();
+    }
+
+    if(!rows || rows.length === 0){
+      throw new Error('No data returned');
+    }
+
+    if(def.multi){
+      window._rawMultiData = rows;
+      populateCountyPicker(rows);
+      filterAndRender(rows);
+    } else {
+      window._rawMultiData = null;
+      const parsed = parseRows(rows);
+      if(!parsed.length) throw new Error('Parse failed — check field names');
+      window._locName = label;
+      setStatus(`${label} · ${parsed.length} weeks`, true);
+      document.getElementById('emptyState').style.display = 'none';
+      render(parsed);
+    }
+  } catch(e){
+    setStatus(`Error: ${e.message}`, false);
+    document.getElementById('emptyState').innerHTML = `
+      <div style="font-size:28px;opacity:.5">⚠</div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e74c3c">Failed to load</div>
+      <div style="font-size:10px;color:var(--text-dim);max-width:420px;text-align:center;line-height:1.8">${e.message}</div>`;
+  }
+}
+
+async function fetchFromAPI(){
+  const apiCode  = API_MAP[CURRENT_AREA_TYPE];
+  const today    = new Date().toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'numeric'});
+  const hucParam = CURRENT_AREA_TYPE === 'huc2' ? '&hucLevel=2' : '';
+  // county: aoi = state abbreviation
+  const aoi      = CURRENT_AREA_TYPE === 'county' ? CURRENT_AOI : CURRENT_AOI;
+  const url      = `${BASE_API}/${apiCode}/GetDroughtSeverityStatisticsByAreaPercent?aoi=${aoi}&startdate=${START}&enddate=${today}&statisticsType=1${hucParam}`;
+  const r        = await fetch(url, {headers:{Accept:'application/json'}});
+  if(!r.ok) throw new Error(`API error HTTP ${r.status}`);
+  return r.json();
+}
+
+async function fetchFromRepo(){
+  const repoBase = document.getElementById('repoBase').value.replace(/\/$/, '');
+  if(!repoBase) throw new Error('Enter your GitHub raw URL in the data source field');
+  // Map area type + aoi to filename
+  const filename = CURRENT_AREA_TYPE === 'county'
+    ? `${CURRENT_AREA_TYPE}/${CURRENT_AOI}.csv`
+    : CURRENT_AREA_TYPE === 'state'
+      ? `state/${Object.entries(STATE_FIPS).find(([a,f])=>f===CURRENT_AOI)?.[0] || CURRENT_AOI}.csv`
+      : `${CURRENT_AREA_TYPE}/${CURRENT_AOI}.csv`;
+  const url = `${repoBase}/${filename}`;
+  const r   = await fetch(url);
+  if(!r.ok) throw new Error(`Repo CSV not found: ${url}`);
+  const text = await r.text();
+  // Parse CSV to array of objects
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const vals = line.split(',');
+    return Object.fromEntries(headers.map((h,i)=>[h, vals[i]?.trim()]));
+  });
+}
+
+function populateCountyPicker(rows){
+  const areaCol = findAreaCol(rows[0]);
+  if(!areaCol) return;
+  const areas = [...new Set(rows.map(r=>r[areaCol]))].sort();
+  const sel = document.getElementById('countySelect');
+  sel.innerHTML = '<option value="">— All (show latest week) —</option>' +
+    areas.map(a=>`<option value="${a}">${a}</option>`).join('');
+  document.getElementById('countyLbl').style.display    = '';
+  document.getElementById('countySelect').style.display = '';
+}
+
+function findAreaCol(row){
+  if(!row) return null;
+  const keys = Object.keys(row).map(k=>k.toLowerCase());
+  const idx  = keys.findIndex(k=>['area','name','county','areaofinterest','stateabbreviation'].includes(k));
+  return idx >= 0 ? Object.keys(row)[idx] : null;
+}
+
+function filterAndRender(rows){
+  const areaCol = findAreaCol(rows[0]);
+  const county  = document.getElementById('countySelect').value;
+  const def     = AREA_DEFS[CURRENT_AREA_TYPE];
+  const label   = def.items[CURRENT_AOI] || CURRENT_AOI;
+
+  if(county && areaCol){
+    // Single county selected → full time series analytics
+    const filtered = rows.filter(r=>r[areaCol]===county);
+    const parsed   = parseRows(filtered);
+    window._locName = county;
+    setStatus(`${label} · ${county} · ${parsed.length} weeks`, true);
+    document.getElementById('emptyState').style.display = 'none';
+    render(parsed);
+  } else {
+    // No county selected → show latest-week table across all areas
+    showMultiAreaTable(rows, areaCol, label);
+  }
+}
+
+function parseRows(rows){
+  return rows.map(r=>{
+    const dateStr = r['mapDate']||r['MapDate']||r['Week']||r['week']||Object.values(r)[0];
+    const d = new Date(dateStr);
+    if(isNaN(d)) return null;
+    const n  = k => parseFloat(r[k]||r[k.toLowerCase()]||0)||0;
+    return {
+      date:    d,
+      dateStr: d.toISOString().slice(0,10),
+      none:    Math.round(n('none')*10)/10,
+      d0d4:    Math.round(n('d0')*10)/10,   // API statisticsType=1: d0=D0-D4 cumulative
+      d1d4:    Math.round(n('d1')*10)/10,
+      d2d4:    Math.round(n('d2')*10)/10,
+      d3d4:    Math.round(n('d3')*10)/10,
+      d4:      Math.round(n('d4')*10)/10,
+    };
+  }).filter(Boolean).sort((a,b)=>a.date-b.date);
+}
+
+function showMultiAreaTable(rows, areaCol, label){
+  // Find latest week
+  const allDates = rows.map(r=>r['mapDate']||r['MapDate']||r['Week']||r['week']||'').filter(Boolean).sort();
+  const latestDate = allDates[allDates.length-1];
+  const latest = rows.filter(r=>(r['mapDate']||r['MapDate']||r['Week']||r['week']||'')===latestDate);
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('dash').style.display = 'block';
+  setStatus(`${label} · ${latest.length} areas · latest: ${latestDate}`, true);
+
+  const def = AREA_DEFS[CURRENT_AREA_TYPE];
+  const selLabel = def.items[CURRENT_AOI] || CURRENT_AOI;
+  window._locName = selLabel;
+
+  Object.values(CH).forEach(c=>c.destroy()); CH={};
+
+  const dash = document.getElementById('dash');
+  const hcol = v=>{
+    if(v<20)return'#3a7d44';if(v<40)return'#8db83b';if(v<60)return'#f1c40f';
+    if(v<75)return'#e8a020';if(v<88)return'#c0602b';return'#c0392b';
+  };
+  const n = (r,k)=>parseFloat(r[k]||r[k.toLowerCase()]||0)||0;
+
+  const rows_html = latest.map(r=>{
+    const area = areaCol ? r[areaCol] : '';
+    const d0=n(r,'d0'),d1=n(r,'d1'),d2=n(r,'d2'),d3=n(r,'d3'),d4=n(r,'d4');
+    const cv = v=>`<td class="hc" style="color:${hcol(v)};-webkit-print-color-adjust:exact">${v.toFixed(1)}%</td>`;
+    return `<tr style="cursor:pointer" onclick="selectSubArea('${area.replace(/'/g,"\\'")}')">
+      <td style="color:var(--amber)">${area}</td>${cv(d0)}${cv(d1)}${cv(d2)}${cv(d3)}${cv(d4)}
+    </tr>`;
+  }).join('');
+
+  dash.innerHTML = `
+    <div class="sh" style="margin-top:2px">
+      <div class="st">${selLabel.toUpperCase()}</div>
+      <div class="ss">All sub-areas · Latest week: ${latestDate} · Click a row for full time-series</div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="text-align:left">Area</th><th>D0-D4</th><th>D1-D4</th><th>D2-D4</th><th>D3-D4</th><th>D4</th></tr></thead>
+      <tbody>${rows_html}</tbody>
+    </table></div>
+    <div style="font-size:10px;color:var(--text-dim);margin-top:8px">
+      ↑ Click any row to view full time-series analytics for that area
+    </div>`;
+}
+
+function selectSubArea(areaName){
+  const sel = document.getElementById('countySelect');
+  sel.value = areaName;
+  onCountyChange();
+}
+
+/* ══════════════════════════════════════════════════════
+   INITIALISE
+══════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  onAreaTypeChange();
+});
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════════ */
+let GD=[], CH={}, ANA_YRS={};
+
+const FIELDS=[
+  {key:'d0d4',label:'D0-D4',cls:'d0',color:'#FFE600',bg:'rgba(255,230,0,0.28)',desc:'Abnormally Dry +'},
+  {key:'d1d4',label:'D1-D4',cls:'d1',color:'#FF8000',bg:'rgba(255,128,0,0.35)',desc:'Moderate Drought +'},
+  {key:'d2d4',label:'D2-D4',cls:'d2',color:'#FF2D00',bg:'rgba(255,45,0,0.40)',desc:'Severe Drought +'},
+  {key:'d3d4',label:'D3-D4',cls:'d3',color:'#AA0000',bg:'rgba(170,0,0,0.50)',desc:'Extreme Drought +'},
+  {key:'d4',  label:'D4',  cls:'d4',color:'#3B0010',bg:'rgba(59,0,16,0.65)',desc:'Exceptional Drought'},
+];
+const ALL_FLDS=[...FIELDS,{key:'none',label:'None',cls:'none',color:'#3a7d44',bg:'rgba(58,125,68,0.15)',desc:'No Drought'}];
+
+// Distinct palette — each year gets a clearly unique color
+// Ordered so top 5 analogs get the most vivid/distinct shades
+const YR_COLORS=[
+  '#22d3ee', // cyan        — analog rank 1
+  '#4ade80', // green       — analog rank 2
+  '#f97316', // orange      — analog rank 3
+  '#e879f9', // magenta     — analog rank 4
+  '#60a5fa', // blue        — analog rank 5
+  '#fb7185', // coral
+  '#facc15', // yellow
+  '#a78bfa', // violet
+  '#34d399', // emerald
+  '#f472b6', // pink
+  '#38bdf8', // sky
+  '#c084fc', // purple
+  '#2dd4bf', // teal
+  '#fbbf24', // amber
+  '#6ee7b7', // mint
+  '#fb923c', // amber-orange
+  '#818cf8', // indigo
+  '#86efac', // light green
+  '#67e8f9', // light cyan
+  '#fca5a5', // salmon
+  '#d946ef', // fuchsia
+  '#a3e635', // lime
+  '#7dd3fc', // light blue
+  '#fdba74', // peach
+  '#c4b5fd', // lavender
+];
+const CUR_YR_COLOR='#f1c40f'; // always gold for current year
+
+Chart.defaults.color='#555e72';
+Chart.defaults.borderColor='#1e2330';
+Chart.defaults.font.family="'IBM Plex Mono',monospace";
+Chart.defaults.font.size=9;
+
+/* ═══════════════════════════════════════════════════
+   FILE UPLOAD
+═══════════════════════════════════════════════════ */
+const dz=document.getElementById('dropZone'),fi=document.getElementById('csvFile');
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0]);});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--amber)';});
+dz.addEventListener('dragleave',()=>dz.style.borderColor='');
+dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';if(e.dataTransfer.files[0])load(e.dataTransfer.files[0]);});
+document.getElementById('commodityName').addEventListener('change',()=>{if(GD.length)render(GD);});
+
+function load(f){
+  document.getElementById('fileName').textContent=f.name;
+  document.getElementById('fileInfo').style.display='flex';
+  Papa.parse(f,{header:true,skipEmptyLines:true,complete:r=>{GD=parseData(r.data);render(GD);}});
+}
+function parseData(raw){
+  return raw.map(r=>{
+    const wk=r['Week']||r['week']||Object.values(r)[0];
+    return{date:new Date(wk),dateStr:wk,
+      none:+(r['None']||r['none']||0),
+      d0d4:+(r['D0-D4']||0),d1d4:+(r['D1-D4']||0),
+      d2d4:+(r['D2-D4']||0),d3d4:+(r['D3-D4']||0),d4:+(r['D4']||0)};
+  }).filter(r=>!isNaN(r.date.getTime())).sort((a,b)=>a.date-b.date);
+}
+
+/* ═══════════════════════════════════════════════════
+   SEASONALITY / STATS HELPERS
+═══════════════════════════════════════════════════ */
+function wkNum(d){
+  const j=new Date(d.getFullYear(),0,1);
+  return Math.max(1,Math.min(52,Math.ceil(((d-j)/86400000+j.getDay()+1)/7)));
+}
+function seasonStats(data,key){
+  const bk=Array.from({length:52},()=>[]),by={};
+  data.forEach(d=>{
+    const w=wkNum(d.date)-1,yr=d.date.getFullYear();
+    bk[w].push(d[key]);
+    if(!by[yr])by[yr]=Array(52).fill(null);
+    by[yr][w]=d[key];
+  });
+  return{
+    avg:bk.map(b=>b.length?b.reduce((a,v)=>a+v,0)/b.length:null),
+    min:bk.map(b=>b.length?Math.min(...b):null),
+    max:bk.map(b=>b.length?Math.max(...b):null),
+    byYear:by
+  };
+}
+function yearAvg(data,key){
+  const s={},c={};
+  data.forEach(d=>{const y=d.date.getFullYear();s[y]=(s[y]||0)+d[key];c[y]=(c[y]||0)+1;});
+  const o={};Object.keys(s).forEach(y=>o[+y]=s[y]/c[y]);return o;
+}
+// Top N closest years by annual average for a field
+function closestYears(data,key,curYr,n=5){
+  const avgs=yearAvg(data,key),curAvg=avgs[curYr];
+  if(curAvg===undefined)return[];
+  return Object.entries(avgs)
+    .filter(([y])=>+y!==curYr)
+    .sort((a,b)=>Math.abs(a[1]-curAvg)-Math.abs(b[1]-curAvg))
+    .slice(0,n).map(([y])=>+y);
+}
+// Get value for a year at the same week-of-year as the current latest row
+function sameWeekValue(data,targetYear,currentDate,key){
+  const wk=wkNum(currentDate);
+  const candidates=data.filter(d=>d.date.getFullYear()===targetYear);
+  let best=null,bestDiff=Infinity;
+  candidates.forEach(d=>{
+    const diff=Math.abs(wkNum(d.date)-wk);
+    if(diff<bestDiff){bestDiff=diff;best=d;}
+  });
+  return best?best[key]:null;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN RENDER
+═══════════════════════════════════════════════════ */
+function render(data){
+  document.getElementById('emptyState').style.display='none';
+  const dash=document.getElementById('dash');
+  dash.style.display='block';
+  Object.values(CH).forEach(c=>c.destroy());CH={};ANA_YRS={};
+
+  const com=window._locName||'United States';
+  const n=data.length,lat=data[n-1],prv=data[n-2];
+  const allYrs=[...new Set(data.map(d=>d.date.getFullYear()))].sort((a,b)=>b-a);
+  const curYr=lat.date.getFullYear();
+
+  // Pre-compute analog years & their assigned colors (per field)
+  // Build global color map: yr→color index (stable across all fields)
+  const yrColorIdx={};
+  let ci=0;
+  allYrs.forEach(y=>{if(y!==curYr){yrColorIdx[y]=ci++;} });
+
+  window._GD=data;window._allYrs=allYrs;window._curYr=curYr;window._yrColorIdx=yrColorIdx;
+
+  // Per-field: compute 5 closest analog years
+  ALL_FLDS.forEach(f=>{
+    const closest=closestYears(data,f.key,curYr,5);
+    ANA_YRS[f.key]=new Set([...closest]);
+    window['_anaDefault_'+f.key]=new Set([...closest]);
+  });
+
+  dash.innerHTML=buildHTML(data,com,allYrs,curYr);
+
+  setTimeout(()=>{
+    renderHistory(data);
+    renderMainSeason(data,curYr);
+    ALL_FLDS.forEach(f=>renderAnaChart(f,data));
+  },60);
+}
+
+/* ═══════════════════════════════════════════════════
+   HTML BUILDER
+═══════════════════════════════════════════════════ */
+function buildHTML(data,com,allYrs,curYr){
+  const n=data.length,lat=data[n-1],prv=data[n-2];
+
+  // Group analog charts: 2 per page
+  const anaPages=[];
+  for(let i=0;i<ALL_FLDS.length;i+=2){
+    anaPages.push(ALL_FLDS.slice(i,i+2));
+  }
+
+  return `
+<!-- ══ PAGE 1: Current Conditions + History + Seasonality ══ -->
+<div class="page1">
+  <div class="srow-wrap">${statCards(data,lat,prv,curYr)}</div>
+
+  <div class="hist-section">
+    <div class="sh" style="margin-top:14px">
+      <div class="st">FULL HISTORICAL RECORD</div>
+      <div class="ss">${data[0].dateStr} → ${lat.dateStr} · ${n} WEEKS</div>
+    </div>
+    <div class="cbox">
+      <div class="ctitle">
+        <span class="cname">% of ${com} Area in Drought</span>
+        <div class="leg">${FIELDS.map(f=>`<div class="li"><div class="ld" style="background:${f.color}"></div>${f.label}</div>`).join('')}</div>
+      </div>
+      <canvas id="histCvs" height="80"></canvas>
+    </div>
+  </div>
+
+  <div class="seas-section">
+    <div class="sh">
+      <div class="st">SEASONALITY — D0-D4 COVERAGE</div>
+      <div class="ss">Historical avg · min/max band · current year overlay</div>
+    </div>
+    <div class="cbox">
+      <div class="ctitle">
+        <span class="cname">D0-D4 Week-of-Year Pattern — All Years (${data[0].date.getFullYear()}–${curYr})</span>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:rgba(241,196,15,0.3);border:1px solid #f1c40f55"></div>MIN–MAX RANGE</div>
+          <div class="li"><div class="ldr" style="background:#e8a020;height:2px"></div>HIST AVG</div>
+          <div class="li"><div class="ldr" style="background:#f1c40f"></div>${curYr} ACTUAL</div>
+        </div>
+      </div>
+      <canvas id="seasonCvs" height="80"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ANALOG PAGES: 2 charts per page, stacked vertically ══ -->
+${anaPages.map((pair,pi)=>`
+<div class="ana-page">
+  ${pi===0?`<div class="sh" style="margin-top:0">
+    <div class="st">ANALOG YEAR ANALYSIS</div>
+    <div class="ss">Per-field closest years · distinct colors · toggle to adjust</div>
+    <span class="analog-badge">◈ YEARS CLOSEST TO CURRENT DROUGHT LEVEL BY FIELD</span>
+  </div>`:''}
+  <div class="analog-wrap">
+    <div class="ana-stack">
+      ${pair.map(f=>buildAnaCard(f,allYrs,curYr,data)).join('')}
+    </div>
+  </div>
+</div>`).join('')}
+
+<!-- ══ FINAL PAGE: Table + Commentary ══ -->
+<div class="final-page">
+  ${summaryTable(data,curYr)}
+  ${commentary(data,com,curYr)}
+</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   STAT CARDS — with WoW + Year-over-Year
+═══════════════════════════════════════════════════ */
+function statCards(data,lat,prv,curYr){
+  const n=data.length;
+  const lyRow=n>=53?data[n-53]:null;
+  const cards=FIELDS.map(f=>{
+    const v=lat[f.key],p=prv?prv[f.key]:v,wow=v-p;
+    const wowCls=wow>0?'up':wow<0?'down':'flat',wowSym=wow>0?'▲':wow<0?'▼':'—';
+    // Year-over-year
+    let yoyHtml='';
+    if(lyRow){
+      const lyv=lyRow[f.key],yoy=v-lyv;
+      const yoyCls=yoy>0?'up':yoy<0?'down':'flat',yoySym=yoy>0?'▲':yoy<0?'▼':'—';
+      yoyHtml=`<div class="schg yoy ${yoyCls}">${yoySym} ${Math.abs(yoy).toFixed(1)}% vs ${lyRow.dateStr.slice(0,10)} (YoY)</div>`;
+    }
+    return`<div class="sc ${f.cls}">
+      <div class="slbl">${f.label} · ${f.desc}</div>
+      <div class="sval">${v.toFixed(0)}<span style="font-size:12px;color:var(--text-dim)">%</span></div>
+      <div class="schg-row">
+        <div class="schg ${wowCls}">${wowSym} ${Math.abs(wow).toFixed(1)}% week-over-week</div>
+        ${yoyHtml}
+      </div>
+    </div>`;
+  }).join('');
+  return`<div class="sh" style="margin-top:2px">
+    <div class="st">CURRENT CONDITIONS</div>
+    <div class="ss">Week of ${lat.dateStr} · WoW &amp; year-over-year comparison</div>
+  </div><div class="srow">${cards}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUILD ANALOG CHART CARD HTML
+═══════════════════════════════════════════════════ */
+function buildAnaCard(f,allYrs,curYr,data){
+  const avgs=yearAvg(data,f.key);
+  const curAvg=avgs[curYr];
+  const defaults=window['_anaDefault_'+f.key]||new Set();
+  const yrColorIdx=window._yrColorIdx||{};
+
+  // Build inline year legend/toggle items
+  // First: current year (always on, gold, not toggleable)
+  const curItem=`<div class="yl-item cur" title="Current year (always shown)">
+    <div class="yl-dot" style="background:${CUR_YR_COLOR}"></div>
+    ${curYr} ★
+  </div>`;
+
+  // Then historical years — sorted by closeness for this field
+  const sortedYrs=allYrs.filter(y=>y!==curYr).sort((a,b)=>{
+    const da=Math.abs((avgs[a]||0)-curAvg),db=Math.abs((avgs[b]||0)-curAvg);
+    return da-db;
+  });
+
+  // Assign color index based on closeness rank for THIS field
+  const yrItems=sortedYrs.map((yr,rank)=>{
+    const isOn=defaults.has(yr);
+    const color=YR_COLORS[rank%YR_COLORS.length];
+    const diff=curAvg!==undefined&&avgs[yr]!==undefined?((avgs[yr]-curAvg)>0?'+':'')+((avgs[yr]-curAvg).toFixed(1)):'';
+    return`<div class="yl-item${isOn?' on':' off'}" id="yli_${f.key}_${yr}" title="${yr} annual avg: ${avgs[yr]!==undefined?avgs[yr].toFixed(1):'?'}% (${diff}pp vs ${curYr})">
+      <div class="yl-dot" style="background:${color}"></div>
+      ${yr}
+      <button onclick="anaToggle('${f.key}',${yr})" title="Toggle ${yr}">×</button>
+    </div>`;
+  }).join('');
+
+  // Build diff summary for title area
+  const anaYrs=[...defaults].sort((a,b)=>Math.abs((avgs[a]||0)-curAvg)-Math.abs((avgs[b]||0)-curAvg));
+  const anaStr=anaYrs.slice(0,5).join(', ');
+
+  return`<div class="cbox" style="margin-bottom:0">
+    <div class="ctitle">
+      <span class="cname" style="color:${f.color}">■ ${f.label} · ${f.desc}</span>
+      <span class="analog-badge" style="font-size:8px">TOP ANALOGS: ${anaStr}</span>
+    </div>
+    <div class="yr-legend" id="leg_${f.key}">
+      ${curItem}${yrItems}
+    </div>
+    <canvas id="ana_${f.key}" height="155"></canvas>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   HISTORY CHART
+═══════════════════════════════════════════════════ */
+function renderHistory(data){
+  const ctx=document.getElementById('histCvs').getContext('2d');
+  CH.hist=new Chart(ctx,{type:'line',
+    data:{labels:data.map(d=>d.dateStr),
+      datasets:FIELDS.map(f=>({label:f.label,data:data.map(d=>d[f.key]),
+        borderColor:f.color,backgroundColor:f.bg,fill:true,borderWidth:1.5,pointRadius:0,tension:0.3}))},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#181c23',borderColor:'#1e2330',borderWidth:1,
+        callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}}},
+      scales:{x:{grid:{color:'#1e2330'},ticks:{maxTicksLimit:14,maxRotation:0}},
+              y:{grid:{color:'#1e2330'},min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN SEASONALITY (D0-D4, min/max)
+═══════════════════════════════════════════════════ */
+function renderMainSeason(data,curY){
+  const ctx=document.getElementById('seasonCvs').getContext('2d');
+  const s=seasonStats(data,'d0d4');
+  const lbs=Array.from({length:52},(_,i)=>`Wk${i+1}`);
+  CH.season=new Chart(ctx,{type:'line',data:{labels:lbs,datasets:[
+    {label:'_max',data:s.max,borderColor:'transparent',backgroundColor:'rgba(241,196,15,0.13)',fill:'+1',pointRadius:0,tension:0.4,borderWidth:0},
+    {label:'_min',data:s.min,borderColor:'rgba(241,196,15,0.25)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0.4,borderWidth:0.5,borderDash:[2,2]},
+    {label:'Hist Avg',data:s.avg,borderColor:'rgba(232,160,32,0.85)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0.4,borderWidth:2,borderDash:[5,3]},
+    {label:`${curY}`,data:s.byYear[curY]||Array(52).fill(null),borderColor:CUR_YR_COLOR,backgroundColor:'transparent',fill:false,pointRadius:0,tension:0.4,borderWidth:2.5},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#181c23',borderColor:'#1e2330',borderWidth:1,
+      filter:i=>!i.dataset.label.startsWith('_'),
+      callbacks:{label:c=>c.parsed.y!==null?` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:null}}},
+    scales:{x:{grid:{color:'#1e2330'},ticks:{maxTicksLimit:18,maxRotation:0}},
+            y:{grid:{color:'#1e2330'},min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+}
+
+/* ═══════════════════════════════════════════════════
+   ANALOG YEAR CHART RENDER
+═══════════════════════════════════════════════════ */
+function renderAnaChart(field,data){
+  const el=document.getElementById('ana_'+field.key);if(!el)return;
+  if(CH['ana_'+field.key]){CH['ana_'+field.key].destroy();delete CH['ana_'+field.key];}
+
+  const curYr=window._curYr;
+  const allYrs=window._allYrs;
+  const avgs=yearAvg(data,field.key);
+  const curAvg=avgs[curYr];
+  const activeSet=ANA_YRS[field.key]||new Set();
+  const s=seasonStats(data,field.key);
+  const lbs=Array.from({length:52},(_,i)=>`Wk${i+1}`);
+
+  // Build year datasets — color by rank of closeness for this field
+  const sortedActive=[...activeSet].sort((a,b)=>{
+    const da=Math.abs((avgs[a]||0)-curAvg),db=Math.abs((avgs[b]||0)-curAvg);
+    return da-db;
+  });
+
+  const yrDS=sortedActive.map((yr,rank)=>{
+    const color=YR_COLORS[rank%YR_COLORS.length];
+    return{
+      label:String(yr),
+      data:s.byYear[yr]||Array(52).fill(null),
+      borderColor:color,
+      backgroundColor:'transparent',
+      fill:false,pointRadius:0,tension:0.4,
+      borderWidth:2,
+    };
+  });
+
+  const ctx=el.getContext('2d');
+  CH['ana_'+field.key]=new Chart(ctx,{type:'line',data:{labels:lbs,datasets:[
+    // min/max band
+    {label:'_max',data:s.max,borderColor:'transparent',backgroundColor:field.color+'16',fill:'+1',pointRadius:0,tension:0.4,borderWidth:0},
+    {label:'_min',data:s.min,borderColor:field.color+'35',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0.4,borderWidth:0.5,borderDash:[2,2]},
+    // historical avg
+    {label:'Hist Avg',data:s.avg,borderColor:field.color+'88',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0.4,borderWidth:1.8,borderDash:[5,3]},
+    // analog year lines (each distinct color)
+    ...yrDS,
+    // current year — always gold, always on top, thicker
+    {label:`${curYr} ★`,data:s.byYear[curYr]||Array(52).fill(null),
+      borderColor:CUR_YR_COLOR,backgroundColor:'rgba(241,196,15,0.06)',
+      fill:false,pointRadius:0,tension:0.4,borderWidth:3},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},
+      tooltip:{backgroundColor:'#181c23',borderColor:'#1e2330',borderWidth:1,
+        filter:i=>!i.dataset.label.startsWith('_'),
+        callbacks:{label:c=>c.parsed.y!==null?` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`:null}}},
+    scales:{
+      x:{grid:{color:'#1e2330'},ticks:{maxTicksLimit:13,maxRotation:0,font:{size:8}}},
+      y:{grid:{color:'#1e2330'},min:0,max:100,ticks:{callback:v=>v+'%',maxTicksLimit:6,font:{size:8}}}
+    }}});
+}
+
+/* ═══════════════════════════════════════════════════
+   YEAR TOGGLE (per analog chart)
+═══════════════════════════════════════════════════ */
+function anaToggle(fldKey,yr){
+  const data=window._GD,curYr=window._curYr;
+  const activeSet=ANA_YRS[fldKey];
+  const legendItem=document.getElementById(`yli_${fldKey}_${yr}`);
+
+  if(activeSet.has(yr)){
+    activeSet.delete(yr);
+    if(legendItem){legendItem.classList.remove('on');legendItem.classList.add('off');}
+  }else{
+    activeSet.add(yr);
+    if(legendItem){legendItem.classList.add('on');legendItem.classList.remove('off');}
+  }
+  const field=ALL_FLDS.find(f=>f.key===fldKey);
+  if(field)renderAnaChart(field,data);
+}
+
+/* ═══════════════════════════════════════════════════
+   SUMMARY TABLE with analog rows
+═══════════════════════════════════════════════════ */
+function hcol(v){
+  if(v===null||v===undefined)return'#555';
+  if(v<20)return'#3a7d44';if(v<40)return'#8db83b';if(v<60)return'#f1c40f';
+  if(v<75)return'#e8a020';if(v<88)return'#c0602b';if(v<95)return'#c0392b';return'#7b1a1a';
+}
+function cell(d,k){
+  if(!d)return'<td>—</td>';
+  const v=typeof d==='object'?d[k]:null;
+  if(v===null||v===undefined)return'<td>—</td>';
+  return`<td class="hc" style="color:${hcol(v)};-webkit-print-color-adjust:exact;print-color-adjust:exact">${v.toFixed(1)}%</td>`;
+}
+function cellDiff(vCur,d,k){
+  if(!d)return'<td>—</td>';
+  const v=typeof d==='object'?d[k]:null;
+  if(v===null||v===undefined)return'<td>—</td>';
+  const diff=vCur!==null?v-vCur:null;
+  const sign=diff!==null?(diff>0?'+':''):''
+  const diffStr=diff!==null?` <span style="font-size:9px;color:${diff>0?'#e74c3c':'#3a7d44'}">(${sign}${diff.toFixed(1)})</span>`:'';
+  return`<td class="hc" style="color:${hcol(v)};-webkit-print-color-adjust:exact;print-color-adjust:exact">${v.toFixed(1)}%${diffStr}</td>`;
+}
+
+function summaryTable(data,curYr){
+  const n=data.length;if(n<5)return'';
+  const mx={},mn={};
+  FIELDS.forEach(f=>{
+    mx[f.key]=Math.max(...data.map(d=>d[f.key]));
+    mn[f.key]=Math.min(...data.map(d=>d[f.key]));
+  });
+  const ly=n>=53?data[n-53]:null;
+  const latest=data[n-1];
+  const latestWk=wkNum(latest.date);
+
+  // Build analog rows for d0d4 (closest years)
+  const anaYrs=closestYears(data,'d0d4',curYr,5);
+  const anaRows=anaYrs.map(yr=>{
+    // Find same week in that year
+    const candidates=data.filter(d=>d.date.getFullYear()===yr);
+    let best=null,bestDiff=Infinity;
+    candidates.forEach(d=>{const diff=Math.abs(wkNum(d.date)-latestWk);if(diff<bestDiff){bestDiff=diff;best=d;}});
+    return{lbl:`≈ Analog ${yr} (wk ~${latestWk})`,d:best,rc:'ana'};
+  });
+
+  const stdRows=[
+    {lbl:`▶ Current Week (${latest.dateStr})`,d:latest,rc:'cur',anchor:true},
+    {lbl:`−1 Week (${data[n-2].dateStr})`,d:data[n-2],rc:''},
+    {lbl:`−2 Weeks (${data[n-3].dateStr})`,d:data[n-3],rc:''},
+    {lbl:`−3 Weeks (${data[n-4].dateStr})`,d:data[n-4],rc:''},
+    {lbl:ly?`Same Period Last Year (${ly.dateStr})`:'Same Period Last Year (N/A)',d:ly,rc:''},
+    {lbl:'▲ Historical Maximum',d:mx,rc:'mx'},
+    {lbl:'▼ Historical Minimum',d:mn,rc:'mn'},
+  ];
+
+  const stdTrs=stdRows.map((r,i)=>`<tr class="${r.rc}${i===5?' sec-break':''}">
+    <td>${r.lbl}</td>${FIELDS.map(f=>cell(r.d,f.key)).join('')}
+  </tr>`).join('');
+
+  const anaTrs=anaRows.map(r=>`<tr class="${r.rc}">
+    <td>${r.lbl}</td>${FIELDS.map(f=>cellDiff(latest[f.key],r.d,f.key)).join('')}
+  </tr>`).join('');
+
+  return`<div class="sh" style="margin-top:0">
+    <div class="st">COMPARATIVE SUMMARY</div>
+    <div class="ss">4-week rolling · year-ago · historical extremes · analog years at same calendar week</div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>PERIOD</th>${FIELDS.map(f=>`<th>${f.label}</th>`).join('')}</tr></thead>
+    <tbody>
+      <tr><td colspan="${FIELDS.length+1}" class="tbl-section-lbl">CURRENT & RECENT READINGS</td></tr>
+      ${stdTrs}
+      <tr><td colspan="${FIELDS.length+1}" class="tbl-section-lbl">ANALOG YEARS AT SAME WEEK (D0-D4 closest · diff vs current in brackets)</td></tr>
+      ${anaTrs}
+    </tbody>
+  </table></div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   COMMENTARY
+═══════════════════════════════════════════════════ */
+function commentary(data,com,curYr){
+  const n=data.length,cur=data[n-1],m4=data[n-5]||data[0];
+  const ly=n>=53?data[n-53]:null;
+  const hAvg=data.reduce((s,d)=>s+d.d0d4,0)/data.length;
+  const mxD0=Math.max(...data.map(d=>d.d0d4)),mxD3=Math.max(...data.map(d=>d.d3d4));
+  const trend=cur.d0d4-m4.d0d4;
+  const yoy=ly?cur.d0d4-ly.d0d4:null;
+  const sev=cur.d0d4>=75?'SEVERE':cur.d0d4>=50?'ELEVATED':cur.d0d4<20?'LOW':'MODERATE';
+  const tStr=trend>0?`<span class="al">worsened ${trend.toFixed(1)}pp</span>`:trend<0?`<span class="pos">improved ${Math.abs(trend).toFixed(1)}pp</span>`:'unchanged';
+  const yoyStr=yoy!==null?yoy>0?`<span class="al">${yoy.toFixed(1)}pp above same week last year</span>`:`<span class="pos">${Math.abs(yoy).toFixed(1)}pp below same week last year</span>`:`<span class="hl">year-ago data N/A</span>`;
+  const avgStr=(cur.d0d4-hAvg)>0?`<span class="al">${(cur.d0d4-hAvg).toFixed(1)}pp above</span>`:`<span class="pos">${Math.abs(cur.d0d4-hAvg).toFixed(1)}pp below</span>`;
+  const d4n=cur.d4>0?`Exceptional drought (D4) covers <span class="al">${cur.d4.toFixed(1)}%</span> of acreage — direct yield risk.`:`No exceptional drought (D4) currently recorded.`;
+  const anaYrs=closestYears(data,'d0d4',curYr,3);
+  const sy=data[0].date.getFullYear(),ey=data[n-1].date.getFullYear();
+  return`<div class="sh">
+    <div class="st">ANALYST COMMENTARY</div>
+    <div class="ss">System-generated · ${new Date().toDateString()}</div>
+  </div>
+  <div class="cmbox"><div class="cmtitle">DROUGHT SITUATION ASSESSMENT — ${com.toUpperCase()}</div>
+  <div class="cmbody">
+    <p>As of <span class="hl">${cur.dateStr}</span>, conditions are classified <span class="hl">${sev}</span> with <span class="hl">${cur.d0d4.toFixed(1)}%</span> of ${com} under drought stress. Over the trailing four weeks, coverage has ${tStr} and is ${yoyStr}.</p>
+    <p>Severe-to-exceptional drought (D2–D4) covers <span class="hl">${cur.d2d4.toFixed(1)}%</span>; extreme drought (D3–D4) at <span class="hl">${cur.d3d4.toFixed(1)}%</span>. ${d4n}</p>
+    <p>Versus the ${sy}–${ey} long-run average of <span class="hl">${hAvg.toFixed(1)}%</span>, current D0–D4 is ${avgStr} the mean. Record: <span class="al">${mxD0.toFixed(1)}%</span> (D0–D4), <span class="al">${mxD3.toFixed(1)}%</span> (D3–D4). The closest historical analogs by annual D0–D4 level are <span class="hl">${anaYrs.join(', ')}</span> — their seasonal trajectories from this point in the year provide the most relevant historical precedent for the near-term outlook.</p>
+    <p style="color:var(--text-dim);font-size:11px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">⚠ Auto-generated from USDA Drought Monitor data. Cross-reference with crop condition reports and precipitation anomalies before decisions. Up to one-week data lag applies.</p>
+  </div></div>`;
+}
+</script>
+
+<script>
+/* ── PRINT: darken Chart.js canvas text & grids ── */
+window.addEventListener('beforeprint', ()=>{
+  Chart.defaults.color = '#333';
+  Chart.defaults.borderColor = '#bbb';
+  Object.values(CH).forEach(c=>{
+    if(!c.options) return;
+    const scales = c.options.scales || {};
+    Object.values(scales).forEach(ax=>{
+      if(ax.grid)  ax.grid.color  = '#ccc';
+      if(ax.ticks) ax.ticks.color = '#333';
+    });
+    c.update('none');
+  });
+});
+window.addEventListener('afterprint', ()=>{
+  Chart.defaults.color = '#555e72';
+  Chart.defaults.borderColor = '#1e2330';
+  Object.values(CH).forEach(c=>{
+    if(!c.options) return;
+    const scales = c.options.scales || {};
+    Object.values(scales).forEach(ax=>{
+      if(ax.grid)  ax.grid.color  = '#1e2330';
+      if(ax.ticks) ax.ticks.color = '#555e72';
+    });
+    c.update('none');
+  });
+});
+</script>
+
+<script>
+window.addEventListener('beforeprint', ()=>{
+  Chart.defaults.color = '#333';
+  Chart.defaults.borderColor = '#bbb';
+  Object.values(CH).forEach(c=>{
+    if(!c.options) return;
+    Object.values(c.options.scales||{}).forEach(ax=>{
+      if(ax.grid)  ax.grid.color  = '#ccc';
+      if(ax.ticks) ax.ticks.color = '#333';
+    });
+    c.update('none');
+  });
+});
+window.addEventListener('afterprint', ()=>{
+  Chart.defaults.color = '#555e72';
+  Chart.defaults.borderColor = '#1e2330';
+  Object.values(CH).forEach(c=>{
+    if(!c.options) return;
+    Object.values(c.options.scales||{}).forEach(ax=>{
+      if(ax.grid)  ax.grid.color  = '#1e2330';
+      if(ax.ticks) ax.ticks.color = '#555e72';
+    });
+    c.update('none');
+  });
+});
+</script>
+</body>
+</html>
